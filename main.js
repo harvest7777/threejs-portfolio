@@ -47,6 +47,7 @@ function onPointerMove(event) {
 }
 
 window.addEventListener("pointermove", onPointerMove);
+window.addEventListener("click", onClick);
 
 function resetMaterials() {
   trackedMeshes.forEach((mesh) => {
@@ -82,6 +83,31 @@ function raycast() {
       }
     });
   }
+}
+
+function onClick() {
+  // we only rly need the first mesh, then we can bubble up
+  const firstIntersect = raycaster.intersectObjects(trackedMeshes, true)[0];
+  if (!firstIntersect) return;
+
+  const intersectedObject = firstIntersect.object;
+
+  // get model it is a part of
+  const modelName = originalMaterials.get(intersectedObject.uuid).modelName;
+  const originalModel = scene.getObjectByName(modelName);
+
+  // highlight the whole model by adding emissive to all children
+  originalModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      const mat = obj.material;
+      if (mat && mat.color) {
+        if ("emissive" in mat) {
+          mat.emissive.set(0xfffccc);
+          mat.emissiveIntensity = 0.3;
+        }
+      }
+    }
+  });
 }
 
 function animate() {
