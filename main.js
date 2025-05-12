@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import { createLights } from "./scene/Lights";
 import { loadMiata } from "./scene/Miata";
@@ -18,15 +17,26 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 const controls = new OrbitControls(camera, renderer.domElement);
 document.body.appendChild(renderer.domElement);
 
-// object setup
-createLights(scene);
-let miataModel = null;
-loadMiata(scene, function (loadedModel) {
-  console.log(loadedModel);
-});
-
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+
+let originalMaterials = new Map();
+let trackedMeshes = [];
+
+// object setup
+createLights(scene);
+loadMiata(scene, function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMaterials.set(obj.uuid, {
+        modelName: loadedModel.name,
+        color: obj.material.emissive.clone(),
+        intensity: obj.material.emissiveIntensity,
+      });
+    }
+  });
+});
 
 function onPointerMove(event) {
   // calculate pointer position in normalized device coordinates
@@ -38,26 +48,50 @@ function onPointerMove(event) {
 
 window.addEventListener("pointermove", onPointerMove);
 
+function resetMaterials() {
+  trackedMeshes.forEach((mesh) => {
+    const original = originalMaterials.get(mesh.uuid);
+    if (original && mesh.material && mesh.material.emissive) {
+      mesh.material.emissive.copy(original.color);
+      mesh.material.emissiveIntensity = original.intensity;
+    }
+  });
+}
+
+function raycast() {
+  // calculate objects intersecting the picking ray
+  const intersects = raycaster.intersectObjects(trackedMeshes, true);
+  for (let i = 0; i < intersects.length; i++) {
+    const intersectedObject = intersects[i].object;
+
+    // get model it is a part of
+    let currentObject = intersectedObject;
+    const modelName = originalMaterials.get(currentObject.uuid).modelName;
+    const originalModel = scene.getObjectByName(modelName);
+
+    // highlight the whole model by adding emissive to all children
+    originalModel.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        const mat = obj.material;
+        if (mat && mat.color) {
+          if ("emissive" in mat) {
+            mat.emissive.set(0xfffccc);
+            mat.emissiveIntensity = 0.3;
+          }
+        }
+      }
+    });
+  }
+}
+
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   raycaster.setFromCamera(pointer, camera);
 
-  // calculate objects intersecting the picking ray
-  const intersects = raycaster.intersectObjects(scene.children);
-  for (let i = 0; i < intersects.length; i++) {
-    const intersectedObject = intersects[i].object;
+  resetMaterials();
+  raycast();
 
-    // Traverse up the parent hierarchy to find the top-level GLTF model or group
-    let currentObject = intersectedObject;
-    while (currentObject) {
-      currentObject = currentObject.parent; // Move up to the parent
-      if (currentObject instanceof THREE.Group) {
-        console.log(currentObject);
-        break;
-      }
-    }
-  }
   renderer.render(scene, camera);
 }
 
