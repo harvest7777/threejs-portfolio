@@ -5,6 +5,8 @@ import { loadMiata } from "./scene/Miata";
 import { createCamera } from "./scene/Camera";
 import { createScene } from "./scene/Scene";
 
+// import { openModal } from "./modal";
+
 // scene setup
 const scene = createScene();
 
@@ -94,20 +96,8 @@ function onClick() {
 
   // get model it is a part of
   const modelName = originalMaterials.get(intersectedObject.uuid).modelName;
-  const originalModel = scene.getObjectByName(modelName);
 
-  // highlight the whole model by adding emissive to all children
-  originalModel.traverse((obj) => {
-    if (obj instanceof THREE.Mesh) {
-      const mat = obj.material;
-      if (mat && mat.color) {
-        if ("emissive" in mat) {
-          mat.emissive.set(0xfffccc);
-          mat.emissiveIntensity = 0.3;
-        }
-      }
-    }
-  });
+  // if (modelName === "Miata") openModal();
 }
 
 function animate() {
