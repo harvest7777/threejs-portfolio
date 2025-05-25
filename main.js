@@ -4,6 +4,7 @@ import { createLights } from "./scene/Lights";
 import { loadMiata } from "./scene/Miata";
 import { createCamera } from "./scene/Camera";
 import { createScene } from "./scene/Scene";
+import { Sky } from "three/examples/jsm/Addons.js";
 
 // import { openModal } from "./modal";
 
@@ -17,6 +18,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
 document.body.appendChild(renderer.domElement);
 
 const raycaster = new THREE.Raycaster();
@@ -25,8 +27,24 @@ const pointer = new THREE.Vector2();
 let originalMaterials = new Map();
 let trackedMeshes = [];
 
-// object setup
+let sky = new Sky();
+sky.scale.setScalar(450000);
+scene.add(sky);
+
+const skyUniforms = sky.material.uniforms;
+skyUniforms["turbidity"].value = 0.1;
+skyUniforms["rayleigh"].value = 2.5;
+skyUniforms["mieCoefficient"].value = 0.005;
+skyUniforms["mieDirectionalG"].value = 0.7;
+
+const sun = new THREE.Vector3();
+const phi = THREE.MathUtils.degToRad(90 - 3);
+const theta = THREE.MathUtils.degToRad(180);
+sun.setFromSphericalCoords(1, phi, theta);
+skyUniforms["sunPosition"].value.copy(sun);
+
 createLights(scene);
+
 loadMiata(scene, function (loadedModel) {
   loadedModel.traverse((obj) => {
     if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
@@ -41,9 +59,6 @@ loadMiata(scene, function (loadedModel) {
 });
 
 function onPointerMove(event) {
-  // calculate pointer position in normalized device coordinates
-  // (-1 to +1) for both components
-
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
