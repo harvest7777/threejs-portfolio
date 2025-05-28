@@ -1,9 +1,6 @@
 {
   "dependencies": {
-    "@react-three/drei": "^10.0.8",
-    "@react-three/fiber": "^9.1.2",
     "@tailwindcss/postcss": "^4.1.6",
-    "tailwindcss": "^4.1.6",
     "three": "^0.176.0"
   },
   "devDependencies": {
