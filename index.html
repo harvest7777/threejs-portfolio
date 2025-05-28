@@ -20,35 +20,6 @@
       }
     </script>
     <script type="module" src="/main.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script type="module" src="/modules/modal.js"></script>
-
-    <!-- simple modal for miata -->
-    <div
-      id="modal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
-    >
-      <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md p-6 relative">
-        <button
-          onclick="closeModal()"
-          class="absolute top-2 right-2 text-gray-500 hover:text-black"
-        >
-          &times;
-        </button>
-        <h2 class="text-xl font-bold mb-4 text-center">My 1992 Miata</h2>
-        <p class="text-center mb-2">
-          Some info about the car will go here blah blah blah
-        </p>
-        <p class="text-sm text-gray-600">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
-        </p>
-      </div>
-    </div>
-
-    <script type="module">
-      import { openModal } from "./modules/modal.js";
-      window.openModal = openModal;
-    </script>
   </body>
 </html>

@@ -1,77 +1,152 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import { createLights } from "./scene/Lights";
-import { loadMiata } from "./scene/Miata";
 import { createCamera } from "./scene/Camera";
 import { createScene } from "./scene/Scene";
-import { Sky } from "three/examples/jsm/Addons.js";
-
-// import { openModal } from "./modal";
+import { createSky } from "./scene/Sky";
+import { loadGLB } from "./scene/LoadGlb";
 
 // scene setup
 const scene = createScene();
 
+/**
+ * maybe later i can add a camera pole to create a cool
+ * spinny effect
+ */
+
 const camera = createCamera();
-camera.position.z = 5;
+camera.position.z = 2;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = false;
+
+createLights(scene);
+createSky(scene);
+
+// without this nothing will render
 document.body.appendChild(renderer.domElement);
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
-let originalMaterials = new Map();
+let originalMeshEmmissive = new Map();
 let trackedMeshes = [];
 
-let sky = new Sky();
-sky.scale.setScalar(450000);
-scene.add(sky);
-
-const skyUniforms = sky.material.uniforms;
-skyUniforms["turbidity"].value = 0.1;
-skyUniforms["rayleigh"].value = 2.5;
-skyUniforms["mieCoefficient"].value = 0.005;
-skyUniforms["mieDirectionalG"].value = 0.7;
-
-const sun = new THREE.Vector3();
-const phi = THREE.MathUtils.degToRad(90 - 3);
-const theta = THREE.MathUtils.degToRad(180);
-sun.setFromSphericalCoords(1, phi, theta);
-skyUniforms["sunPosition"].value.copy(sun);
-
-createLights(scene);
-
-loadMiata(scene, function (loadedModel) {
+loadGLB(scene, "sillymobile.glb", "Miata", function (loadedModel) {
   loadedModel.traverse((obj) => {
     if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
       trackedMeshes.push(obj);
-      originalMaterials.set(obj.uuid, {
+      originalMeshEmmissive.set(obj.uuid, {
         modelName: loadedModel.name,
-        color: obj.material.emissive.clone(),
-        intensity: obj.material.emissiveIntensity,
+        material: obj.material.clone(),
       });
     }
   });
+  loadedModel.scale.set(1.3, 1.3, 1.3);
+  loadedModel.position.set(1, -0.5, 0);
 });
+
+loadGLB(scene, "indoor_plant.glb", "Pothos", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(0.3, 0.3, 0.3);
+  loadedModel.position.set(0, -0.5, 0);
+});
+
+loadGLB(scene, "trophy.glb", "Trophy", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(0.08, 0.08, 0.08);
+  loadedModel.position.set(0, -0.5, 0.5);
+});
+
+loadGLB(scene, "gerald.glb", "Gerald", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(0.1, 0.1, 0.1);
+  loadedModel.position.set(0.3, -0.2, 0.5);
+});
+
+loadGLB(scene, "desk.glb", "Desk", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(0.15, 0.15, 0.15);
+  loadedModel.rotation.y = Math.PI / 2;
+  loadedModel.position.set(0.3, 0, 0.5);
+});
+
+loadGLB(scene, "chair.glb", "Chair", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(0.07, 0.07, 0.07);
+  loadedModel.position.set(0.3, -0.2, 0.8);
+});
+
+loadGLB(scene, "floor.glb", "Floor", function (loadedModel) {
+  loadedModel.traverse((obj) => {
+    if (obj instanceof THREE.Mesh && obj.material && obj.material.emissive) {
+      trackedMeshes.push(obj);
+      originalMeshEmmissive.set(obj.uuid, {
+        modelName: loadedModel.name,
+        material: obj.material.clone(),
+      });
+    }
+  });
+  loadedModel.scale.set(1, 1, 1);
+  loadedModel.position.set(0.3, -0.5, 0.8);
+});
+window.addEventListener("pointermove", onPointerMove);
+window.addEventListener("click", onClick);
 
 function onPointerMove(event) {
   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-window.addEventListener("pointermove", onPointerMove);
-window.addEventListener("click", onClick);
-
 function resetMaterials() {
   trackedMeshes.forEach((mesh) => {
-    const original = originalMaterials.get(mesh.uuid);
+    const original = originalMeshEmmissive.get(mesh.uuid);
     if (original && mesh.material && mesh.material.emissive) {
-      mesh.material.emissive.copy(original.color);
-      mesh.material.emissiveIntensity = original.intensity;
+      mesh.material.emissive.copy(original.material.emissive);
+      mesh.material.emissiveIntensity = original.material.emissiveIntensity;
     }
   });
 }
@@ -79,12 +154,12 @@ function resetMaterials() {
 function raycast() {
   // calculate objects intersecting the picking ray
   const intersects = raycaster.intersectObjects(trackedMeshes, true);
-  for (let i = 0; i < intersects.length; i++) {
-    const intersectedObject = intersects[i].object;
+  if (intersects.length > 0) {
+    const intersectedObject = intersects[0].object;
 
     // get model it is a part of
     let currentObject = intersectedObject;
-    const modelName = originalMaterials.get(currentObject.uuid).modelName;
+    const modelName = originalMeshEmmissive.get(currentObject.uuid).modelName;
     const originalModel = scene.getObjectByName(modelName);
 
     // highlight the whole model by adding emissive to all children
@@ -110,9 +185,7 @@ function onClick() {
   const intersectedObject = firstIntersect.object;
 
   // get model it is a part of
-  const modelName = originalMaterials.get(intersectedObject.uuid).modelName;
-
-  // if (modelName === "Miata") openModal();
+  const modelName = originalMeshEmmissive.get(intersectedObject.uuid).modelName;
 }
 
 function animate() {
